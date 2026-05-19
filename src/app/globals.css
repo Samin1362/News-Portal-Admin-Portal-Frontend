@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Deligo Admin design tokens — lifted from
+   news-portal-deligo/project/dashboard.css per admin_portal_plan.md.
+   Shared with frontend/ + editor_frontend/ where names collide.
+   ============================================================ */
+
+@theme {
+  --color-ink: #1a1a1a;
+  --color-paper: #ffffff;
+  --color-paper-2: #f4f4f3;
+  --color-canvas: #e7e2d6;
+  --color-muted: #8a8378;
+  --color-accent: #c8321b;
+  --color-accent-2: #2d6b3f;
+  --color-warn: #d6a52a;
+  --color-info: #2b6cb0;
+
+  --font-serif: var(--font-serif-google), "Times New Roman", serif;
+  --font-sans: var(--font-sans-google), system-ui, sans-serif;
+  --font-hand: var(--font-hand-google), "Patrick Hand", cursive;
+
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+}
+
+:root {
+  --pad: 14px;
+}
+
+[data-density="compact"] { --pad: 10px; }
+[data-density="comfy"]   { --pad: 18px; }
+
+html, body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6, .serif {
+  font-family: var(--font-serif);
+}
+
+.font-hand {
+  font-family: var(--font-hand);
+}
+
+/* Skewed editorial-red underline used behind hero section titles. */
+.uline {
+  position: relative;
+  display: inline-block;
+}
+.uline::after {
+  content: "";
+  position: absolute;
+  inset: auto -2px -4px -2px;
+  height: 6px;
+  background: var(--color-accent);
+  opacity: 0.35;
+  border-radius: 4px;
+  transform: skewX(-8deg);
+}
+
+/* ---------- Animations from dashboard.css ---------- */
+
+@keyframes livepulse {
+  0%, 100% { transform: scale(1);   opacity: 0.9; }
+  50%      { transform: scale(1.5); opacity: 0.3; }
+}
+.live-dot::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  vertical-align: middle;
+  animation: livepulse 1.6s ease-in-out infinite;
+}
+
+@keyframes tickerScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: inline-flex;
+  gap: 28px;
+  white-space: nowrap;
+  animation: tickerScroll 32s linear infinite;
+}
+
+@keyframes dashIn {
+  to { stroke-dashoffset: 0; }
+}
+
+/* fadeIn is opacity-only on purpose — a translate-based fadeUp leaves a
+   `transform` on the element which makes it the containing block for any
+   `position: fixed` descendants (drawers, modals, toasts) and clips them
+   to the column instead of the viewport. */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.stagger > * {
+  opacity: 0;
+  animation: fadeIn 0.45s ease-out forwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.04s; }
+.stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger > *:nth-child(3) { animation-delay: 0.16s; }
+.stagger > *:nth-child(4) { animation-delay: 0.22s; }
+.stagger > *:nth-child(5) { animation-delay: 0.28s; }
+.stagger > *:nth-child(6) { animation-delay: 0.34s; }
+.stagger > *:nth-child(7) { animation-delay: 0.40s; }
+.stagger > *:nth-child(8) { animation-delay: 0.46s; }
+
+/* Card hover lift — used on KPI tiles + Card primitives. */
+.card-hov {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.card-hov:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0 var(--color-ink);
+}
+
+/* Row hover used on list / queue items. */
+.row-hov {
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+.row-hov:hover {
+  transform: translateX(2px);
+  box-shadow: -4px 0 0 var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* Sidebar active-item accent rail (3px) sits at the left of the active row. */
+.nav-active::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: var(--color-accent);
+  border-radius: 2px;
+}
