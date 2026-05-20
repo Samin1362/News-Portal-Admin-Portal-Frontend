@@ -5,12 +5,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth } from "@/lib/auth/AdminAuthProvider";
 import { listQueue } from "@/lib/api/articles.api";
 import { listAdminComments } from "@/lib/api/comments.api";
+import { listRoleRequests } from "@/lib/api/roleRequests.api";
 import type { CountKey } from "@/components/shell/nav.config";
 
 /**
  * Sidebar count badges. Each entry hits a 1-row paginated request so we
- * pull `meta.total` cheaply. role-requests-pending stays at 0 until the
- * §0a backend lands.
+ * pull `meta.total` cheaply.
  */
 export function useNavCounts(): Partial<Record<CountKey, number>> {
   const { getIdToken, role } = useAdminAuth();
@@ -43,11 +43,28 @@ export function useNavCounts(): Partial<Record<CountKey, number>> {
     staleTime: 30_000,
   });
 
+  const roleRequestsQ = useQuery({
+    enabled,
+    queryKey: ["nav-count", "role-requests-pending"],
+    queryFn: async () => {
+      const token = await getIdToken();
+      if (!token) return 0;
+      const result = await listRoleRequests(
+        { status: "pending", limit: 1 },
+        token,
+      );
+      return result.meta?.total ?? 0;
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
   return useMemo<Partial<Record<CountKey, number>>>(
     () => ({
       "queue-submitted": queueQ.data,
       "comments-pending": commentsQ.data,
+      "role-requests-pending": roleRequestsQ.data,
     }),
-    [queueQ.data, commentsQ.data],
+    [queueQ.data, commentsQ.data, roleRequestsQ.data],
   );
 }

@@ -75,3 +75,10 @@ export interface ArticleFullDTO extends ArticleCardDTO {
   recentViews: number;
   isCommentsEnabled: boolean;
 }
+
+/** Used by TagInput autocomplete suggestions. */
+export interface TagDTO {
+  id: string;
+  name: string;
+  slug: string;
+}
