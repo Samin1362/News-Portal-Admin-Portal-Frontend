@@ -36,18 +36,29 @@ export default function OverviewPage() {
 
       <KpiGrid />
 
-      <section className="grid lg:grid-cols-[2fr_1fr] gap-4">
+      {/*
+        All grid templates use `minmax(0, 1fr)` instead of bare `1fr` —
+        the default `1fr` is shorthand for `minmax(auto, 1fr)`, which
+        lets a column grow past its share when its child can't shrink.
+        That was the source of the "Recent sign-ups taking more width"
+        bug on the overview page.
+
+        The 3-card row (Recent sign-ups / Audit feed / Moderation) only
+        switches to 3-across at xl (≥1280px) — below that the cards are
+        too dense (each card has avatars + multiple pills + buttons).
+      */}
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <TrafficArea />
         <ByCategoryBars />
       </section>
 
-      <section className="grid md:grid-cols-3 gap-4">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <RecentSignups />
         <AuditFeed />
         <ModerationPreview />
       </section>
 
-      <section className="grid md:grid-cols-[2fr_1fr] gap-4">
+      <section className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <SystemHealth />
         <QuickActions />
       </section>

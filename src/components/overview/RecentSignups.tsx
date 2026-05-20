@@ -77,7 +77,7 @@ export function RecentSignups() {
             return (
               <li
                 key={user.id}
-                className="flex items-center gap-3 py-2.5 row-hov pl-1 pr-2 rounded-sm"
+                className="flex items-center gap-3 py-2.5 row-hov pl-1 pr-2 rounded-sm min-w-0"
               >
                 <Avatar
                   name={user.displayName}
@@ -92,12 +92,25 @@ export function RecentSignups() {
                   <p className="font-hand text-[11px] text-muted truncate">
                     {user.email}
                   </p>
+                  {/* Narrow cards: pills + relative time wrap beneath the
+                      name/email so the row never forces its grid column
+                      wider than its share. */}
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5 2xl:hidden">
+                    <Pill tone={ROLE_TONE[user.role]}>{user.role}</Pill>
+                    <Pill tone={status.tone}>{status.label}</Pill>
+                    <span className="font-hand text-[11px] text-muted">
+                      {formatRelative(user.createdAt)}
+                    </span>
+                  </div>
                 </div>
-                <Pill tone={ROLE_TONE[user.role]}>{user.role}</Pill>
-                <span className="font-hand text-[11px] text-muted hidden sm:inline">
-                  {formatRelative(user.createdAt)}
-                </span>
-                <Pill tone={status.tone}>{status.label}</Pill>
+                {/* Wide cards (2xl+): pills + time stay inline on the right. */}
+                <div className="hidden 2xl:flex items-center gap-2 shrink-0">
+                  <Pill tone={ROLE_TONE[user.role]}>{user.role}</Pill>
+                  <span className="font-hand text-[11px] text-muted">
+                    {formatRelative(user.createdAt)}
+                  </span>
+                  <Pill tone={status.tone}>{status.label}</Pill>
+                </div>
               </li>
             );
           })}

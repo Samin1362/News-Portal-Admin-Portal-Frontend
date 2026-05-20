@@ -3,26 +3,26 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
-import { Ticker, type TickerItem } from "./Ticker";
 import {
   useStoredDrawerExpanded,
   writeStoredDrawerExpanded,
 } from "@/hooks/useStoredDrawerExpanded";
 import { cn } from "@/lib/utils/cn";
 
-const PLACEHOLDER_TICKER: TickerItem[] = [
-  { label: "Uptime", value: "—" },
-  { label: "Error rate", value: "—" },
-  { label: "Live readers", value: "—" },
-  { label: "CDN cache", value: "—" },
-  { label: "DB p95", value: "—" },
-  { label: "Storage", value: "—" },
-];
-
 interface Props {
   children: ReactNode;
 }
 
+/**
+ * App shell — sidebar + topbar + main content area.
+ *
+ * The horizontal `Ticker` strip that used to sit below the Topbar was
+ * removed because it only ever rendered placeholder em-dashes (no real
+ * `/metrics` stream wired up yet). The same metrics are already surfaced
+ * by the `SystemHealth` widget on the overview page and the `live · N
+ * readers` pill in the Topbar, so the strip was pure visual noise.
+ * Re-add `<Ticker items={…} />` here once it can show real values.
+ */
 export function AdminShell({ children }: Props) {
   const expanded = useStoredDrawerExpanded();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -63,7 +63,6 @@ export function AdminShell({ children }: Props) {
         )}
       >
         <Topbar onToggleDrawer={handleToggle} drawerOpen={mobileOpen} />
-        <Ticker items={PLACEHOLDER_TICKER} />
 
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 pb-10">
           <div className="stagger flex flex-col gap-5 max-w-[1280px] mx-auto w-full">
