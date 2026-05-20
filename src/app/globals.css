@@ -153,3 +153,76 @@ h1, h2, h3, h4, h5, h6, .serif {
   background: var(--color-accent);
   border-radius: 2px;
 }
+
+/* ============================================================
+   Phase 4 — Article body styling for the override editor's
+   TipTap surface + the (future) admin preview pane. Copied
+   from frontend/ so the editor renders the same typography
+   readers will see on the public site.
+   ============================================================ */
+.prose-deligo p { margin-block: 1em; }
+.prose-deligo p:first-child { margin-top: 0; }
+.prose-deligo p:last-child { margin-bottom: 0; }
+.prose-deligo h2 {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: 1.6em;
+  margin-block: 1.6em 0.6em;
+  letter-spacing: -0.01em;
+}
+.prose-deligo h3 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 1.25em;
+  margin-block: 1.4em 0.5em;
+}
+.prose-deligo a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1.5px;
+}
+.prose-deligo blockquote {
+  border-left: 3px solid var(--color-accent);
+  padding-left: 1em;
+  margin-block: 1.4em;
+  font-style: italic;
+  color: rgba(26, 26, 26, 0.85);
+}
+.prose-deligo ul, .prose-deligo ol {
+  padding-left: 1.25em;
+  margin-block: 1em;
+}
+.prose-deligo ul { list-style: disc; }
+.prose-deligo ol { list-style: decimal; }
+.prose-deligo li { margin-block: 0.4em; }
+.prose-deligo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 2px;
+  margin-block: 1.4em;
+}
+.prose-deligo figure { margin-block: 1.6em; }
+.prose-deligo figure figcaption {
+  font-family: var(--font-hand);
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-top: 0.4em;
+  text-align: center;
+}
+.prose-deligo strong { font-weight: 700; }
+.prose-deligo em { font-style: italic; }
+.prose-deligo code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--color-paper-2);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.prose-deligo hr {
+  border: none;
+  border-top: 1.5px solid var(--color-ink);
+  margin-block: 2em;
+}

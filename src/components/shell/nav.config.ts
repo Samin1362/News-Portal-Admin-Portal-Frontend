@@ -136,6 +136,45 @@ export const NAV: NavItem[] = [
   },
 ];
 
+/** Flat list of every registered nav href — singles + group children. */
+const ALL_HREFS: string[] = (() => {
+  const out: string[] = [];
+  for (const item of NAV) {
+    if (item.kind === "single") out.push(item.href);
+    else for (const child of item.children) out.push(child.href);
+  }
+  return out;
+})();
+
+/**
+ * Sibling-aware active check. True when:
+ *   - pathname exactly equals href, OR
+ *   - pathname is a deep descendant (`href + "/…"`) AND no other registered
+ *     nav href is a strictly longer matching prefix.
+ *
+ * Without the longer-prefix guard, "All articles" (`/content/articles`)
+ * also lights up when the user is on its sibling "Editorial queue"
+ * (`/content/articles/queue`) — two highlights at once. The guard makes
+ * the more specific registered entry claim the active state, while deep
+ * unregistered routes like `/content/articles/[id]/edit` still bubble up
+ * to "All articles" as expected.
+ */
+export function isNavHrefActive(href: string, pathname: string): boolean {
+  if (href === "/") return pathname === "/";
+  if (pathname === href) return true;
+  if (!pathname.startsWith(href + "/")) return false;
+  for (const other of ALL_HREFS) {
+    if (other === href) continue;
+    if (
+      other.length > href.length &&
+      (pathname === other || pathname.startsWith(other + "/"))
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export interface Crumb {
   groupLabel?: string;
   label: string;
@@ -160,15 +199,22 @@ export function crumbForPath(pathname: string): Crumb {
     }
   }
   // Prefix match (handles deep routes like /people/users/[id] or /content/articles/[id]/edit).
+  // Prefer the longest matching child href so siblings like /content/articles
+  // and /content/articles/queue don't both claim the same deep path.
+  let best: { groupLabel: string; label: string; len: number } | null = null;
   for (const item of NAV) {
-    if (item.kind === "group") {
-      for (const child of item.children) {
-        if (pathname.startsWith(child.href + "/")) {
-          return { groupLabel: item.label, label: child.label };
-        }
+    if (item.kind !== "group") continue;
+    for (const child of item.children) {
+      if (pathname.startsWith(child.href + "/") && child.href.length > (best?.len ?? -1)) {
+        best = {
+          groupLabel: item.label,
+          label: child.label,
+          len: child.href.length,
+        };
       }
     }
   }
+  if (best) return { groupLabel: best.groupLabel, label: best.label };
   return { label: pathname };
 }
 

@@ -27,3 +27,63 @@ export async function listUsers(
     cache: "no-store",
   });
 }
+
+export async function getUser(
+  id: string,
+  token: string,
+): Promise<UserProfile> {
+  const result = await apiFetch<UserProfile>(`/api/v1/users/${id}`, {
+    token,
+    cache: "no-store",
+  });
+  return result.data;
+}
+
+export async function patchUserRole(
+  id: string,
+  role: UserRole,
+  token: string,
+): Promise<UserProfile> {
+  const result = await apiFetch<UserProfile>(`/api/v1/users/${id}/role`, {
+    method: "PATCH",
+    token,
+    body: { role },
+  });
+  return result.data;
+}
+
+export async function patchUserBlocked(
+  id: string,
+  isBlocked: boolean,
+  token: string,
+): Promise<UserProfile> {
+  const result = await apiFetch<UserProfile>(`/api/v1/users/${id}/block`, {
+    method: "PATCH",
+    token,
+    body: { isBlocked },
+  });
+  return result.data;
+}
+
+export async function patchUserCommentBlocked(
+  id: string,
+  isCommentBlocked: boolean,
+  token: string,
+): Promise<UserProfile> {
+  const result = await apiFetch<UserProfile>(
+    `/api/v1/users/${id}/comment-block`,
+    {
+      method: "PATCH",
+      token,
+      body: { isCommentBlocked },
+    },
+  );
+  return result.data;
+}
+
+export async function deleteUser(id: string, token: string): Promise<void> {
+  await apiFetch<void>(`/api/v1/users/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}

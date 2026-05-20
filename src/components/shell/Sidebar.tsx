@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
@@ -9,7 +9,12 @@ import {
   useStoredNavExpanded,
   writeStoredNavExpanded,
 } from "@/hooks/useStoredNavExpanded";
-import { NAV, groupForPath, type NavItem } from "./nav.config";
+import {
+  NAV,
+  groupForPath,
+  isNavHrefActive,
+  type NavItem,
+} from "./nav.config";
 import { cn } from "@/lib/utils/cn";
 
 interface Props {
@@ -33,13 +38,21 @@ export function Sidebar({
   const counts = useNavCounts();
   const storedAccordion = useStoredNavExpanded();
 
-  // Effective accordion = persisted set ∪ the group containing the active
-  // route. Derived at render time so we never have to setState-in-effect.
-  const accordionOpen = useMemo<ReadonlySet<string>>(() => {
+  // Auto-open the active group, but only on pathname *change* — so that a
+  // manual collapse on the current path (e.g. clicking the active "Content"
+  // header) sticks instead of being re-opened on the next render.
+  const lastAutoOpenedPathRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (lastAutoOpenedPathRef.current === pathname) return;
+    lastAutoOpenedPathRef.current = pathname;
     const active = groupForPath(pathname);
-    if (!active || storedAccordion.has(active)) return storedAccordion;
-    return new Set([...storedAccordion, active]);
-  }, [storedAccordion, pathname]);
+    if (!active || storedAccordion.has(active)) return;
+    const next = new Set(storedAccordion);
+    next.add(active);
+    writeStoredNavExpanded(next);
+  }, [pathname, storedAccordion]);
+
+  const accordionOpen = storedAccordion;
 
   const toggleAccordion = useCallback(
     (key: string) => {
@@ -63,11 +76,10 @@ export function Sidebar({
     [onExpandDesktop, storedAccordion],
   );
 
+  // Sibling-aware so /content/articles/queue doesn't also mark
+  // /content/articles ("All articles") as active — see isNavHrefActive.
   const isActive = useCallback(
-    (href: string) =>
-      href === "/"
-        ? pathname === "/"
-        : pathname === href || pathname.startsWith(href + "/"),
+    (href: string) => isNavHrefActive(href, pathname),
     [pathname],
   );
 
