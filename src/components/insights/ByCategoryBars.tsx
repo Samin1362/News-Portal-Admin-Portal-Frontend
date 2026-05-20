@@ -81,7 +81,7 @@ export function ByCategoryBars() {
           {rows.map((row) => (
             <li
               key={row.id}
-              className="grid grid-cols-[140px_1fr_36px] items-center gap-2"
+              className="grid grid-cols-[minmax(60px,140px)_minmax(0,1fr)_36px] items-center gap-2"
             >
               <span className="font-sans text-[12.5px] truncate">{row.label}</span>
               <div className="h-2 bg-paper-2 rounded-full overflow-hidden">

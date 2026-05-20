@@ -71,9 +71,9 @@ export function SystemHealth() {
         {bars.map((bar) => (
           <li
             key={bar.label}
-            className="grid grid-cols-[130px_1fr_70px] items-center gap-2"
+            className="grid grid-cols-[minmax(80px,130px)_minmax(0,1fr)_70px] items-center gap-2"
           >
-            <span className="font-sans text-[12.5px]">{bar.label}</span>
+            <span className="font-sans text-[12.5px] truncate">{bar.label}</span>
             <div className="h-2 bg-paper-2 rounded-full overflow-hidden">
               {bar.value === null ? (
                 <div className="h-full w-full bg-[repeating-linear-gradient(45deg,var(--color-paper-2)_0_6px,var(--color-ink)/0.06_6px_12px)]" />

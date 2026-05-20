@@ -14,7 +14,11 @@ export function Card({ children, className, hov, accentRail }: CardProps) {
   return (
     <section
       className={cn(
-        "relative bg-paper border-[1.5px] border-ink rounded-sm p-4",
+        // `min-w-0` is critical when a Card sits inside a grid/flex container:
+        // without it the card refuses to shrink below its content's intrinsic
+        // min-width, which pushes its grid column wider than its `1fr` share
+        // and breaks the responsive layout on the overview page.
+        "relative bg-paper border-[1.5px] border-ink rounded-sm p-4 min-w-0",
         hov && "card-hov",
         accentRail && "border-l-[3px] border-l-accent",
         className,
