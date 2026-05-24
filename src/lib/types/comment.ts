@@ -1,5 +1,12 @@
 export type CommentStatus = "pending" | "approved" | "rejected";
 
+/**
+ * Admin-side filter that includes the `'all'` literal — matches the backend's
+ * extended `listAdminCommentsQuerySchema` (the service treats `'all'` as
+ * "no status filter").
+ */
+export type CommentFilterStatus = CommentStatus | "all";
+
 export interface CommentAuthorDTO {
   id: string;
   displayName: string;
