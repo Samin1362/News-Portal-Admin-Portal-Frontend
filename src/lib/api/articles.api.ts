@@ -20,11 +20,17 @@ export interface QueueQuery {
   status?: QueueStatus;
   page?: number;
   limit?: number;
+  /**
+   * Filter to articles tagged with this slug. Phase 6 added this to
+   * `queueQuerySchema` for the taxonomy usage-count column.
+   */
+  tagSlug?: string;
 }
 
 function qsQueue(query: QueueQuery): string {
   const parts: string[] = [];
   if (query.status) parts.push(`status=${encodeURIComponent(query.status)}`);
+  if (query.tagSlug) parts.push(`tagSlug=${encodeURIComponent(query.tagSlug)}`);
   if (query.page) parts.push(`page=${query.page}`);
   if (query.limit) parts.push(`limit=${query.limit}`);
   return parts.length > 0 ? `?${parts.join("&")}` : "";
