@@ -14,7 +14,9 @@ import {
 import { Btn } from "@/components/primitives/Btn";
 import { useAdminAuth } from "@/lib/auth/AdminAuthProvider";
 import { useToast } from "@/lib/ui/toast";
+import { useAuditRecorder } from "@/lib/audit/useAuditRecorder";
 import type { ArticleFullDTO } from "@/lib/types/article";
+import type { AuditAction } from "@/lib/audit/types";
 import { cn } from "@/lib/utils/cn";
 
 interface Props {
@@ -47,10 +49,21 @@ const LABELS: Record<Action, string> = {
   unarchive: "Unarchive",
 };
 
+const AUDIT_FOR_ACTION: Record<Action, AuditAction> = {
+  submit: "article-submit",
+  "start-review": "article-start-review",
+  approve: "article-approve",
+  reject: "article-reject",
+  publish: "article-publish",
+  archive: "article-archive",
+  unarchive: "article-unarchive",
+};
+
 export function WorkflowActions({ article, onUpdated, variant = "edit" }: Props) {
   const { getIdToken } = useAdminAuth();
   const toast = useToast();
   const qc = useQueryClient();
+  const recordAudit = useAuditRecorder();
   const [pending, setPending] = useState<Action | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -76,11 +89,19 @@ export function WorkflowActions({ article, onUpdated, variant = "edit" }: Props)
           return rejectArticle(article.id, reason.trim(), token);
       }
     },
-    onSuccess: (updated) => {
+    onSuccess: (updated, action) => {
       qc.setQueryData(["article", article.id], updated);
       qc.invalidateQueries({ queryKey: ["articles"] });
       qc.invalidateQueries({ queryKey: ["queue"] });
       onUpdated?.(updated);
+      if (updated) {
+        recordAudit({
+          action: AUDIT_FOR_ACTION[action],
+          targetId: updated.id,
+          summary: `${LABELS[action]} → "${updated.headline}"`,
+          detail: action === "reject" && reason ? reason.trim() : updated.slug,
+        });
+      }
       toast.success("Done.");
       setRejectOpen(false);
       setReason("");

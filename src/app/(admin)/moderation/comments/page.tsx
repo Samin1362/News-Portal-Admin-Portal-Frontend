@@ -22,6 +22,7 @@ import { CommentDetailDrawer } from "@/components/moderation/CommentDetailDrawer
 import { ShortcutsSheet } from "@/components/moderation/ShortcutsSheet";
 import { useAdminAuth } from "@/lib/auth/AdminAuthProvider";
 import { useToast } from "@/lib/ui/toast";
+import { useAuditRecorder } from "@/lib/audit/useAuditRecorder";
 import {
   approveComment,
   deleteComment,
@@ -82,6 +83,7 @@ function CommentsInner() {
   const params = useSearchParams();
   const { getIdToken, role } = useAdminAuth();
   const toast = useToast();
+  const recordAudit = useAuditRecorder();
   const qc = useQueryClient();
 
   const isAdmin = role === "admin";
@@ -307,6 +309,22 @@ function CommentsInner() {
 
       try {
         await mut.mutateAsync({ ids, action });
+        recordAudit({
+          action:
+            action === "approve"
+              ? "comment-approve"
+              : action === "reject"
+                ? "comment-reject"
+                : "comment-delete",
+          targetId: ids[0] ?? null,
+          summary:
+            action === "approve"
+              ? `Approved ${ids.length} comment${ids.length === 1 ? "" : "s"}`
+              : action === "reject"
+                ? `Rejected ${ids.length} comment${ids.length === 1 ? "" : "s"}`
+                : `Hard-deleted ${ids.length} comment${ids.length === 1 ? "" : "s"}`,
+          detail: ids.length > 1 ? `${ids.length} IDs` : null,
+        });
         toast.success(
           action === "approve"
             ? `${ids.length} approved.`
@@ -337,6 +355,7 @@ function CommentsInner() {
       queryKey,
       removeFromCache,
       patchStatusInCache,
+      recordAudit,
     ],
   );
 

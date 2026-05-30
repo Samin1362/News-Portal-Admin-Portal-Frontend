@@ -23,6 +23,7 @@ import {
   patchUserCommentBlocked,
   patchUserRole,
 } from "@/lib/api/users.api";
+import { useAuditRecorder } from "@/lib/audit/useAuditRecorder";
 import type { UserProfile, UserRole } from "@/lib/auth/types";
 import { formatRelative } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
@@ -46,6 +47,7 @@ export default function UserDetailPage({ params }: Props) {
   const qc = useQueryClient();
   const toast = useToast();
   const { getIdToken, role } = useAdminAuth();
+  const recordAudit = useAuditRecorder();
   const enabled = role === "admin";
 
   const q = useQuery({
@@ -68,10 +70,18 @@ export default function UserDetailPage({ params }: Props) {
     mutationFn: async (newRole: UserRole) => {
       const token = await getIdToken();
       if (!token) throw new Error("Not signed in.");
-      return patchUserRole(id, newRole, token);
+      const previous = q.data?.role ?? null;
+      const next = await patchUserRole(id, newRole, token);
+      return { next, previous };
     },
-    onSuccess: (next) => {
+    onSuccess: ({ next, previous }) => {
       onUserUpdated(next);
+      recordAudit({
+        action: "role-change",
+        targetId: next.id,
+        summary: `Changed ${next.displayName}'s role`,
+        detail: previous ? `${previous} → ${next.role}` : `→ ${next.role}`,
+      });
       toast.success(`Role updated to ${next.role}. Email queued.`);
     },
     onError: (err: unknown) => {
@@ -87,6 +97,14 @@ export default function UserDetailPage({ params }: Props) {
     },
     onSuccess: (next) => {
       onUserUpdated(next);
+      recordAudit({
+        action: next.isBlocked ? "user-block" : "user-unblock",
+        targetId: next.id,
+        summary: next.isBlocked
+          ? `Suspended ${next.displayName}`
+          : `Restored ${next.displayName}`,
+        detail: next.email,
+      });
       toast.success(next.isBlocked ? "User suspended." : "User restored.");
     },
     onError: (err: unknown) => {
@@ -102,6 +120,16 @@ export default function UserDetailPage({ params }: Props) {
     },
     onSuccess: (next) => {
       onUserUpdated(next);
+      recordAudit({
+        action: next.isCommentBlocked
+          ? "user-comment-block"
+          : "user-comment-unblock",
+        targetId: next.id,
+        summary: next.isCommentBlocked
+          ? `Blocked comments for ${next.displayName}`
+          : `Unblocked comments for ${next.displayName}`,
+        detail: next.email,
+      });
       toast.success(
         next.isCommentBlocked
           ? "Comments blocked."
@@ -120,6 +148,15 @@ export default function UserDetailPage({ params }: Props) {
       await deleteUser(id, token);
     },
     onSuccess: () => {
+      const target = q.data;
+      recordAudit({
+        action: "user-delete",
+        targetId: id,
+        summary: target
+          ? `Deleted ${target.displayName}`
+          : `Deleted user ${id}`,
+        detail: target?.email ?? null,
+      });
       toast.success("User deleted.");
       void qc.invalidateQueries({ queryKey: ["users"], exact: false });
       router.replace("/people/users");

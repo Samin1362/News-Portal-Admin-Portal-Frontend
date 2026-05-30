@@ -43,6 +43,7 @@ import {
   type UpdateCategoryBody,
 } from "@/lib/api/categories.api";
 import { ApiError } from "@/lib/api/client";
+import { useAuditRecorder } from "@/lib/audit/useAuditRecorder";
 import type { CategoryDTO } from "@/lib/types/category";
 
 const QUERY_KEY = ["categories", { includeInactive: true }] as const;
@@ -52,6 +53,7 @@ export default function CategoriesPage() {
   const { getIdToken, role } = useAdminAuth();
   const toast = useToast();
   const qc = useQueryClient();
+  const recordAudit = useAuditRecorder();
   const enabled = role === "admin";
 
   const listQ = useQuery({
@@ -135,6 +137,12 @@ export default function CategoriesPage() {
           qc.setQueryData<CategoryDTO[]>(QUERY_KEY, (prev) =>
             (prev ?? []).map((c) => (c.id === updated.id ? updated : c)),
           );
+          recordAudit({
+            action: "category-update",
+            targetId: updated.id,
+            summary: `Updated category "${updated.name}"`,
+            detail: updated.slug,
+          });
           toast.success(`"${updated.name}" updated.`);
         } else {
           const created = await createMut.mutateAsync(body);
@@ -145,6 +153,12 @@ export default function CategoriesPage() {
                 a.createdAt.localeCompare(b.createdAt),
             ),
           );
+          recordAudit({
+            action: "category-create",
+            targetId: created.id,
+            summary: `Created category "${created.name}"`,
+            detail: created.slug,
+          });
           toast.success(`"${created.name}" created.`);
         }
         qc.invalidateQueries({ queryKey: QUERY_KEY });
@@ -160,7 +174,7 @@ export default function CategoriesPage() {
         return false;
       }
     },
-    [editTarget, updateMut, createMut, qc, toast],
+    [editTarget, updateMut, createMut, qc, toast, recordAudit],
   );
 
   // ---- toggleActive (optimistic) ----
@@ -196,6 +210,12 @@ export default function CategoriesPage() {
       qc.setQueryData<CategoryDTO[]>(QUERY_KEY, (prev) =>
         (prev ?? []).filter((c) => c.id !== deleteTarget.id),
       );
+      recordAudit({
+        action: "category-delete",
+        targetId: deleteTarget.id,
+        summary: `Deleted category "${deleteTarget.name}"`,
+        detail: deleteTarget.slug,
+      });
       toast.success(`"${deleteTarget.name}" deleted.`);
       setDeleteTarget(null);
     } catch (err) {
@@ -207,7 +227,7 @@ export default function CategoriesPage() {
             : "Delete failed.";
       toast.error(msg);
     }
-  }, [deleteTarget, deleteMut, qc, toast]);
+  }, [deleteTarget, deleteMut, qc, toast, recordAudit]);
 
   // ---- drag-to-reorder ----
   // Pending reorder writes coalesce into a single batch with an 800ms debounce.

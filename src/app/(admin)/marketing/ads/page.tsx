@@ -21,6 +21,7 @@ import { Pill } from "@/components/primitives/Pill";
 import { useAdminAuth } from "@/lib/auth/AdminAuthProvider";
 import { useToast } from "@/lib/ui/toast";
 import { listAds, updateAd } from "@/lib/api/ads.api";
+import { useAuditRecorder } from "@/lib/audit/useAuditRecorder";
 import {
   AD_PLACEMENTS,
   AD_PLACEMENT_LABEL,
@@ -67,6 +68,7 @@ function AdsInner() {
   const { getIdToken, role } = useAdminAuth();
   const toast = useToast();
   const qc = useQueryClient();
+  const recordAudit = useAuditRecorder();
   const enabled = role === "admin";
 
   const filterKey = params.get("filter") ?? "all";
@@ -152,13 +154,21 @@ function AdsInner() {
           isActive: next,
         });
         patchInCache(updated.id, updated);
+        recordAudit({
+          action: "ad-toggle",
+          targetId: updated.id,
+          summary: updated.isActive
+            ? `Activated ad "${updated.name}"`
+            : `Paused ad "${updated.name}"`,
+          detail: AD_PLACEMENT_LABEL[updated.placement],
+        });
         qc.invalidateQueries({ queryKey: ["ads"] });
       } catch (err) {
         patchInCache(ad.id, { isActive: !next });
         toast.error(err instanceof Error ? err.message : "Toggle failed.");
       }
     },
-    [patchInCache, toggleMut, toast, qc],
+    [patchInCache, toggleMut, toast, qc, recordAudit],
   );
 
   return (
