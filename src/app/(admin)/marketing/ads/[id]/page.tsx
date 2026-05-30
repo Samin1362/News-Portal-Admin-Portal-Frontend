@@ -23,6 +23,7 @@ import { DeleteConfirmModal } from "@/components/taxonomy/DeleteConfirmModal";
 import { useAdminAuth } from "@/lib/auth/AdminAuthProvider";
 import { useToast } from "@/lib/ui/toast";
 import { deleteAd, getAd, updateAd } from "@/lib/api/ads.api";
+import { useAuditRecorder } from "@/lib/audit/useAuditRecorder";
 import { AD_PLACEMENT_LABEL, type AdPlacement } from "@/lib/types/ad";
 import { formatShortDate } from "@/lib/utils/format";
 
@@ -47,6 +48,7 @@ function AdDetailInner({ id }: { id: string }) {
   const { getIdToken } = useAdminAuth();
   const toast = useToast();
   const qc = useQueryClient();
+  const recordAudit = useAuditRecorder();
 
   const adQ = useQuery({
     queryKey: ["ad", id],
@@ -108,6 +110,12 @@ function AdDetailInner({ id }: { id: string }) {
       const updated = await updateMut.mutateAsync(values);
       qc.setQueryData(["ad", id], updated);
       qc.invalidateQueries({ queryKey: ["ads"] });
+      recordAudit({
+        action: "ad-update",
+        targetId: updated.id,
+        summary: `Updated ad "${updated.name}"`,
+        detail: AD_PLACEMENT_LABEL[updated.placement],
+      });
       toast.success("Ad updated.");
       return true;
     } catch (err) {
@@ -121,6 +129,13 @@ function AdDetailInner({ id }: { id: string }) {
       await deleteMut.mutateAsync();
       qc.invalidateQueries({ queryKey: ["ads"] });
       qc.removeQueries({ queryKey: ["ad", id] });
+      const target = adQ.data;
+      recordAudit({
+        action: "ad-delete",
+        targetId: id,
+        summary: target ? `Deleted ad "${target.name}"` : `Deleted ad ${id}`,
+        detail: target ? AD_PLACEMENT_LABEL[target.placement] : null,
+      });
       toast.success("Ad deleted.");
       router.push("/marketing/ads");
     } catch (err) {

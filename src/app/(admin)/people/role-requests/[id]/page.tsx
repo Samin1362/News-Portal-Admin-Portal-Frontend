@@ -16,6 +16,7 @@ import { Pill } from "@/components/primitives/Pill";
 import { Btn } from "@/components/primitives/Btn";
 import { useAdminAuth } from "@/lib/auth/AdminAuthProvider";
 import { useToast } from "@/lib/ui/toast";
+import { useAuditRecorder } from "@/lib/audit/useAuditRecorder";
 import {
   approveRoleRequest,
   getRoleRequest,
@@ -47,6 +48,7 @@ export default function RoleRequestDetailPage({ params }: Props) {
   const qc = useQueryClient();
   const toast = useToast();
   const { getIdToken, role } = useAdminAuth();
+  const recordAudit = useAuditRecorder();
   const enabled = role === "admin";
 
   const q = useQuery({
@@ -76,6 +78,12 @@ export default function RoleRequestDetailPage({ params }: Props) {
     },
     onSuccess: (next) => {
       handleAfterDecision(next);
+      recordAudit({
+        action: "role-request-approve",
+        targetId: next.id,
+        summary: `Approved role request → ${next.toRole}`,
+        detail: `userId: ${next.userId}`,
+      });
       toast.success("Request approved · email queued");
     },
     onError: (err: unknown) => {
@@ -91,6 +99,12 @@ export default function RoleRequestDetailPage({ params }: Props) {
     },
     onSuccess: (next) => {
       handleAfterDecision(next);
+      recordAudit({
+        action: "role-request-reject",
+        targetId: next.id,
+        summary: `Rejected role request → ${next.toRole}`,
+        detail: next.decisionReason ?? `userId: ${next.userId}`,
+      });
       toast.success("Request rejected · email queued");
     },
     onError: (err: unknown) => {

@@ -16,7 +16,8 @@ import { AdPreviewCard } from "@/components/marketing/AdPreviewCard";
 import { useAdminAuth } from "@/lib/auth/AdminAuthProvider";
 import { useToast } from "@/lib/ui/toast";
 import { createAd } from "@/lib/api/ads.api";
-import type { AdPlacement } from "@/lib/types/ad";
+import { useAuditRecorder } from "@/lib/audit/useAuditRecorder";
+import { AD_PLACEMENT_LABEL, type AdPlacement } from "@/lib/types/ad";
 
 interface PreviewState {
   placement: AdPlacement;
@@ -30,6 +31,7 @@ export default function NewAdPage() {
   const { getIdToken } = useAdminAuth();
   const toast = useToast();
   const qc = useQueryClient();
+  const recordAudit = useAuditRecorder();
 
   const [preview, setPreview] = useState<PreviewState>({
     placement: "home_sidebar",
@@ -62,6 +64,12 @@ export default function NewAdPage() {
   async function handleSubmit(values: AdFormValues): Promise<boolean> {
     try {
       const created = await createMut.mutateAsync(values);
+      recordAudit({
+        action: "ad-create",
+        targetId: created.id,
+        summary: `Created ad "${created.name}"`,
+        detail: AD_PLACEMENT_LABEL[created.placement],
+      });
       toast.success(`"${created.name}" created.`);
       qc.invalidateQueries({ queryKey: ["ads"] });
       router.push(`/marketing/ads/${created.id}`);

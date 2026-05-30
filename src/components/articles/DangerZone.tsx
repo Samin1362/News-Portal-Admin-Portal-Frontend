@@ -8,6 +8,7 @@ import { Input } from "@/components/primitives/Input";
 import { deleteArticle } from "@/lib/api/articles.api";
 import { useAdminAuth } from "@/lib/auth/AdminAuthProvider";
 import { useToast } from "@/lib/ui/toast";
+import { useAuditRecorder } from "@/lib/audit/useAuditRecorder";
 import type { ArticleFullDTO } from "@/lib/types/article";
 
 interface Props {
@@ -25,6 +26,7 @@ export function DangerZone({ article }: Props) {
   const router = useRouter();
   const { getIdToken } = useAdminAuth();
   const toast = useToast();
+  const recordAudit = useAuditRecorder();
   const [confirm, setConfirm] = useState("");
 
   const mutation = useMutation({
@@ -34,6 +36,12 @@ export function DangerZone({ article }: Props) {
       await deleteArticle(article.id, token);
     },
     onSuccess: () => {
+      recordAudit({
+        action: "article-delete",
+        targetId: article.id,
+        summary: `Deleted "${article.headline}"`,
+        detail: article.slug,
+      });
       toast.success("Article deleted.");
       router.replace("/content/articles");
     },
