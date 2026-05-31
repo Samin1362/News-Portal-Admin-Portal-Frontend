@@ -15,6 +15,7 @@ const DOT_BY_ACTION: Record<string, string> = {
   "user-block": "bg-accent",
   "user-unblock": "bg-accent-2",
   "user-delete": "bg-accent",
+  "user-self-update": "bg-[color:var(--color-info)]",
   "article-publish": "bg-accent-2",
   "article-reject": "bg-accent",
   "article-delete": "bg-accent",

@@ -14,17 +14,25 @@ import { cn } from "@/lib/utils/cn";
 
 export type ToastTone = "info" | "success" | "error";
 
+export interface ToastOptions {
+  /** Echoed `X-Request-Id` from the backend, surfaced under the message. */
+  requestId?: string;
+  /** Override the default 4.5s auto-dismiss. */
+  durationMs?: number;
+}
+
 interface ToastItem {
   id: number;
   tone: ToastTone;
   message: string;
+  requestId?: string;
 }
 
 interface ToastContextValue {
-  show: (message: string, tone?: ToastTone) => void;
-  success: (message: string) => void;
-  error: (message: string) => void;
-  info: (message: string) => void;
+  show: (message: string, tone?: ToastTone, opts?: ToastOptions) => void;
+  success: (message: string, opts?: ToastOptions) => void;
+  error: (message: string, opts?: ToastOptions) => void;
+  info: (message: string, opts?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -45,10 +53,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const show = useCallback(
-    (message: string, tone: ToastTone = "info") => {
+    (message: string, tone: ToastTone = "info", opts?: ToastOptions) => {
       const id = nextId++;
-      setItems((prev) => [...prev, { id, message, tone }]);
-      const timer = setTimeout(() => dismiss(id), 4500);
+      setItems((prev) => [
+        ...prev,
+        { id, message, tone, requestId: opts?.requestId },
+      ]);
+      const timer = setTimeout(() => dismiss(id), opts?.durationMs ?? 4500);
       timers.current.set(id, timer);
     },
     [dismiss],
@@ -65,9 +76,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ToastContextValue>(
     () => ({
       show,
-      success: (m) => show(m, "success"),
-      error: (m) => show(m, "error"),
-      info: (m) => show(m, "info"),
+      success: (m, opts) => show(m, "success", opts),
+      error: (m, opts) => show(m, "error", opts),
+      info: (m, opts) => show(m, "info", opts),
     }),
     [show],
   );
@@ -100,7 +111,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               {t.tone === "error" && <span className="text-accent">Error</span>}
               {t.tone === "info" && <span className="text-muted">Notice</span>}
             </span>
-            <span className="text-ink">{t.message}</span>
+            <span className="text-ink block">{t.message}</span>
+            {t.requestId ? (
+              <span className="block font-mono text-[10px] text-muted mt-1 break-all">
+                req · {t.requestId}
+              </span>
+            ) : null}
           </button>
         ))}
       </div>

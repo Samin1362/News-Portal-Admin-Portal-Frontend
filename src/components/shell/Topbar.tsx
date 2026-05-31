@@ -1,9 +1,11 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Bell, Menu, Search } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { crumbForPath } from "./nav.config";
+import { CommandPalette } from "./CommandPalette";
 import { UserChip } from "./UserChip";
 import { Pill } from "@/components/primitives/Pill";
 import type { ArticleCardDTO } from "@/lib/types/article";
@@ -34,69 +36,107 @@ export function Topbar({ drawerOpen, onToggleDrawer }: Props) {
   const pathname = usePathname() ?? "/";
   const crumb = crumbForPath(pathname);
   const liveReaders = useLiveReaderEstimate();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  const openPalette = useCallback(() => setPaletteOpen(true), []);
+  const closePalette = useCallback(() => setPaletteOpen(false), []);
+
+  // Global ⌘K / Ctrl+K opens the palette from anywhere.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const isK = e.key === "k" || e.key === "K";
+      if (!isK) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input, textarea, [contenteditable='true']")) {
+        if (!(e.metaKey || e.ctrlKey)) return;
+      }
+      if (e.metaKey || e.ctrlKey) {
+        e.preventDefault();
+        setPaletteOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-30 bg-paper border-b-[1.5px] border-ink">
-      <div className="flex items-center gap-3 px-4 sm:px-5 h-14">
-        <button
-          type="button"
-          onClick={onToggleDrawer}
-          aria-label="Toggle navigation"
-          aria-expanded={drawerOpen}
-          aria-controls="primary-nav-drawer"
-          className="inline-flex items-center justify-center w-9 h-9 border-[1.5px] border-ink rounded-sm hover:bg-paper-2 transition-colors"
-        >
-          <Menu size={16} aria-hidden />
-        </button>
+    <>
+      <header className="sticky top-0 z-30 bg-paper border-b-[1.5px] border-ink">
+        <div className="flex items-center gap-3 px-4 sm:px-5 h-14">
+          <button
+            type="button"
+            onClick={onToggleDrawer}
+            aria-label="Toggle navigation"
+            aria-expanded={drawerOpen}
+            aria-controls="primary-nav-drawer"
+            className="inline-flex items-center justify-center w-9 h-9 border-[1.5px] border-ink rounded-sm hover:bg-paper-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+          >
+            <Menu size={16} aria-hidden />
+          </button>
 
-        <nav
-          aria-label="Breadcrumb"
-          className="hidden md:flex items-center gap-2 font-hand text-[12px] text-muted pl-1"
-        >
-          {crumb.groupLabel ? (
-            <>
-              <span>{crumb.groupLabel}</span>
-              <span className="text-ink/30">/</span>
-            </>
-          ) : null}
-          <span className="text-ink font-semibold truncate max-w-[28ch]">
-            {crumb.label}
-          </span>
-        </nav>
-
-        <div className="flex-1" />
-
-        <div className="hidden lg:flex items-center gap-2 px-3 h-9 bg-paper-2 border-[1.5px] border-ink rounded-md min-w-[220px] xl:min-w-[260px]">
-          <Search size={14} aria-hidden className="text-muted" />
-          <input
-            type="search"
-            placeholder="Search — ⌘K"
-            className="flex-1 bg-transparent outline-none font-sans text-[13px] placeholder:text-muted"
-            disabled
-            aria-disabled
-          />
-        </div>
-
-        {liveReaders !== null ? (
-          <Pill tone="accent-2" live className="hidden md:inline-flex">
-            <span title="Estimated from the rolling sum of recent article views — replaced by a real concurrency stream in Phase 8.">
-              live · {liveReaders.toLocaleString()} reader
-              {liveReaders === 1 ? "" : "s"}
+          <nav
+            aria-label="Breadcrumb"
+            className="hidden md:flex items-center gap-2 font-hand text-[12px] text-muted pl-1"
+          >
+            {crumb.groupLabel ? (
+              <>
+                <span>{crumb.groupLabel}</span>
+                <span className="text-ink/30">/</span>
+              </>
+            ) : null}
+            <span className="text-ink font-semibold truncate max-w-[28ch]">
+              {crumb.label}
             </span>
-          </Pill>
-        ) : null}
+          </nav>
 
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative inline-flex items-center justify-center w-9 h-9 border-[1.5px] border-ink rounded-sm hover:bg-paper-2 live-dot"
-        >
-          <Bell size={15} aria-hidden />
-        </button>
+          <div className="flex-1" />
 
-        <UserChip />
-      </div>
-    </header>
+          <button
+            type="button"
+            onClick={openPalette}
+            aria-label="Open command palette"
+            aria-keyshortcuts="Meta+K Control+K"
+            className="hidden lg:flex items-center gap-2 px-3 h-9 bg-paper-2 border-[1.5px] border-ink rounded-md min-w-[220px] xl:min-w-[260px] text-left hover:bg-paper transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+          >
+            <Search size={14} aria-hidden className="text-muted" />
+            <span className="flex-1 font-sans text-[13px] text-muted">
+              Search…
+            </span>
+            <kbd className="font-mono text-[10px] text-muted bg-paper border border-ink/30 rounded px-1.5 py-0.5">
+              ⌘K
+            </kbd>
+          </button>
+
+          <button
+            type="button"
+            onClick={openPalette}
+            aria-label="Open command palette"
+            className="lg:hidden inline-flex items-center justify-center w-9 h-9 border-[1.5px] border-ink rounded-sm hover:bg-paper-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+          >
+            <Search size={15} aria-hidden />
+          </button>
+
+          {liveReaders !== null ? (
+            <Pill tone="accent-2" live className="hidden md:inline-flex">
+              <span title="Estimated from the rolling sum of recent article views — replaced by a real concurrency stream in Phase 8.">
+                live · {liveReaders.toLocaleString()} reader
+                {liveReaders === 1 ? "" : "s"}
+              </span>
+            </Pill>
+          ) : null}
+
+          <button
+            type="button"
+            aria-label="Notifications"
+            className="relative inline-flex items-center justify-center w-9 h-9 border-[1.5px] border-ink rounded-sm hover:bg-paper-2 live-dot focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+          >
+            <Bell size={15} aria-hidden />
+          </button>
+
+          <UserChip />
+        </div>
+      </header>
+      <CommandPalette open={paletteOpen} onClose={closePalette} />
+    </>
   );
 }
-

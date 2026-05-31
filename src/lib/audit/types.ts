@@ -16,6 +16,7 @@ export type AuditAction =
   | "user-comment-block"
   | "user-comment-unblock"
   | "user-delete"
+  | "user-self-update"
   | "article-publish"
   | "article-schedule"
   | "article-archive"
@@ -76,6 +77,7 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   "user-comment-block": "Comments blocked for user",
   "user-comment-unblock": "Comments unblocked for user",
   "user-delete": "User deleted",
+  "user-self-update": "Own profile updated",
   "article-publish": "Article published",
   "article-schedule": "Article scheduled",
   "article-archive": "Article archived",

@@ -7,23 +7,26 @@ import { Btn } from "@/components/primitives/Btn";
 import { useAdminAuth } from "@/lib/auth/AdminAuthProvider";
 import { ApiError } from "@/lib/api/client";
 import { useToast } from "@/lib/ui/toast";
+import { usePortalPrefs } from "@/hooks/usePortalPrefs";
 import { cn } from "@/lib/utils/cn";
 
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAdminAuth();
   const toast = useToast();
+  const prefs = usePortalPrefs();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Once signed in, route based on role so non-admins don't loop through login.
+  // Admins land on their configured default page (defaults to /).
   useEffect(() => {
     if (auth.loading || !auth.firebaseUser) return;
-    if (auth.role === "admin") router.replace("/");
+    if (auth.role === "admin") router.replace(prefs.defaultLanding || "/");
     else if (auth.role) router.replace("/access-denied");
-  }, [auth.loading, auth.firebaseUser, auth.role, router]);
+  }, [auth.loading, auth.firebaseUser, auth.role, prefs.defaultLanding, router]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

@@ -11,18 +11,22 @@ export class ApiError extends Error {
   public readonly status: number;
   public readonly code: ApiErrorCode;
   public readonly details?: unknown;
+  /** Request ID echoed from the X-Request-Id response header, if any. */
+  public readonly requestId?: string;
 
   constructor(
     message: string,
     status: number,
     code: ApiErrorCode = "INTERNAL_ERROR",
     details?: unknown,
+    requestId?: string,
   ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
     this.details = details;
+    this.requestId = requestId;
   }
 }
 
@@ -71,6 +75,11 @@ export async function apiFetch<T>(
     );
   }
 
+  const requestId =
+    response.headers.get("x-request-id") ??
+    response.headers.get("X-Request-Id") ??
+    undefined;
+
   let parsed: ApiEnvelope<T> | null = null;
   try {
     parsed = (await response.json()) as ApiEnvelope<T>;
@@ -79,6 +88,9 @@ export async function apiFetch<T>(
     throw new ApiError(
       `Request failed with status ${response.status}`,
       response.status,
+      "INTERNAL_ERROR",
+      undefined,
+      requestId,
     );
   }
 
@@ -88,6 +100,7 @@ export async function apiFetch<T>(
       response.status,
       parsed.code,
       parsed.details,
+      requestId,
     );
   }
 

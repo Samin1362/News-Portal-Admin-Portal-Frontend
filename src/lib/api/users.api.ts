@@ -87,3 +87,25 @@ export async function deleteUser(id: string, token: string): Promise<void> {
     token,
   });
 }
+
+export interface UpdateMeBody {
+  displayName?: string;
+  bio?: string;
+  photoURL?: string | null;
+}
+
+export async function updateMe(
+  body: UpdateMeBody,
+  token: string,
+): Promise<UserProfile> {
+  const payload: Record<string, unknown> = {};
+  if (body.displayName !== undefined) payload.displayName = body.displayName;
+  if (body.bio !== undefined) payload.bio = body.bio;
+  if (body.photoURL !== undefined) payload.photoURL = body.photoURL ?? "";
+  const result = await apiFetch<UserProfile>(`/api/v1/users/me`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+  return result.data;
+}
