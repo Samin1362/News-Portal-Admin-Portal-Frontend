@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Bell, Menu, Search } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { crumbForPath } from "./nav.config";
 import { CommandPalette } from "./CommandPalette";
+import { NotificationsMenu } from "./NotificationsMenu";
 import { UserChip } from "./UserChip";
 import { Pill } from "@/components/primitives/Pill";
 import type { ArticleCardDTO } from "@/lib/types/article";
@@ -91,12 +92,13 @@ export function Topbar({ drawerOpen, onToggleDrawer }: Props) {
 
           <div className="flex-1" />
 
+          {/* Search trigger — wide pill on lg+, icon-only on smaller. */}
           <button
             type="button"
             onClick={openPalette}
             aria-label="Open command palette"
             aria-keyshortcuts="Meta+K Control+K"
-            className="hidden lg:flex items-center gap-2 px-3 h-9 bg-paper-2 border-[1.5px] border-ink rounded-md min-w-[220px] xl:min-w-[260px] text-left hover:bg-paper transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+            className="hidden lg:flex items-center gap-2 px-3 h-9 bg-paper-2 border-[1.5px] border-ink rounded-md min-w-[220px] xl:min-w-[260px] text-left hover:bg-paper transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 shadow-[2px_2px_0_var(--color-ink)]"
           >
             <Search size={14} aria-hidden className="text-muted" />
             <span className="flex-1 font-sans text-[13px] text-muted">
@@ -125,13 +127,10 @@ export function Topbar({ drawerOpen, onToggleDrawer }: Props) {
             </Pill>
           ) : null}
 
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="relative inline-flex items-center justify-center w-9 h-9 border-[1.5px] border-ink rounded-sm hover:bg-paper-2 live-dot focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
-          >
-            <Bell size={15} aria-hidden />
-          </button>
+          {/* Visual divider between context tools and identity cluster. */}
+          <span aria-hidden className="hidden sm:inline-block w-px h-6 bg-ink/15" />
+
+          <NotificationsMenu />
 
           <UserChip />
         </div>
